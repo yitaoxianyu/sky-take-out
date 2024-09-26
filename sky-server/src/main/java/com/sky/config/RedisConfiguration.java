@@ -24,5 +24,5 @@ public class RedisConfiguration {
         return redisTemplate;
     }
 
-
+//test
 }
