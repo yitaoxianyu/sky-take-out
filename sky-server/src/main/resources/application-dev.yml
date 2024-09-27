@@ -6,7 +6,12 @@ sky:
     database: sky_take_out
     username: root
     password: 2861587619
-
+#注意：这里在git时不能携带oss密钥，需要进行一定配置
+  alioss:
+      access-key-id:  ${ALIOSS_ACCESS_KEY_ID}
+      access-key-secret: ${ALIOSS_ACCESS_KEY_SECRET}
+      bucket-name: ${ALIOSS_BUCKET_NAME}
+      endpoint: ${ALIOSS_ENDPOINT}
   redis:
     host: localhost
     port: 6379

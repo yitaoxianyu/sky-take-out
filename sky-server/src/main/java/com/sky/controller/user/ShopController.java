@@ -19,7 +19,7 @@ public class ShopController {
 
     public static final String KEY = "SHOP_STATUS";
 
-    @GetMapping
+    @GetMapping("/status")
     @ApiOperation(value = "用户获取店铺状态")
     public Result<Integer> getStatus(){
         Integer status = (Integer)redisTemplate.opsForValue().get(KEY);
