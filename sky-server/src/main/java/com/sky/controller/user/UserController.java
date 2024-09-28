@@ -46,9 +46,15 @@ public class UserController {
         Map<String,Object> claim = new HashMap<>();
         claim.put(JwtClaimsConstant.USER_ID,user.getId());
 
-        JwtUtil.createJWT(jwtProperties.getAdminSecretKey(),jwtProperties.getAdminTtl(),claim);
+        String token = JwtUtil.createJWT(jwtProperties.getAdminSecretKey(), jwtProperties.getAdminTtl(), claim);
 
-        return null;
+        UserLoginVO userLoginVO = UserLoginVO.builder()
+                .id(user.getId())
+                .openid(user.getOpenid())
+                .token(token)
+                .build();
+
+        return Result.success(userLoginVO);
     }
 
 }

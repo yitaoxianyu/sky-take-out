@@ -94,7 +94,7 @@ public class HttpClientUtil {
             if (paramMap != null) {
                 List<NameValuePair> paramList = new ArrayList();
                 for (Map.Entry<String, String> param : paramMap.entrySet()) {
-                    paramList.add(new BasicNameValuePair(param.getKey(), param.getValue()));
+                    paramList.add(new BasicNameValuePair(param.getKey(),   param.getValue()));
                 }
                 // 模拟表单
                 UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramList);
