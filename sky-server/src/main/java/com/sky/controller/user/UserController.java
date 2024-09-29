@@ -10,7 +10,6 @@ import com.sky.service.UserService;
 import com.sky.utils.JwtUtil;
 import com.sky.vo.UserLoginVO;
 import io.swagger.annotations.Api;
-import jdk.internal.agent.Agent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,7 +45,7 @@ public class UserController {
         Map<String,Object> claim = new HashMap<>();
         claim.put(JwtClaimsConstant.USER_ID,user.getId());
 
-        String token = JwtUtil.createJWT(jwtProperties.getAdminSecretKey(), jwtProperties.getAdminTtl(), claim);
+        String token = JwtUtil.createJWT(jwtProperties.getUserSecretKey(), jwtProperties.getAdminTtl(), claim);
 
         UserLoginVO userLoginVO = UserLoginVO.builder()
                 .id(user.getId())

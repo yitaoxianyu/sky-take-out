@@ -80,7 +80,7 @@ public class DishController {
 
     @GetMapping("/list")
     @ApiOperation("查询多个菜品对象")
-    public Result<List<Dish>> list(@RequestParam String categoryId){
+    public Result<List<Dish>> list(@RequestParam Long categoryId){
         List<Dish> list = dishService.list(categoryId);
 
 

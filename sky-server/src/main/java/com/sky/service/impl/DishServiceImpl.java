@@ -1,20 +1,17 @@
 package com.sky.service.impl;
 
 
-import com.alibaba.druid.sql.parser.NotAllowCommentException;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-import com.sky.annotation.AutoFill;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
-import com.sky.enumeration.OperationType;
 import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.DishMapper;
-import com.sky.mapper.FlavorMapper;
+import com.sky.mapper.DishFlavorMapper;
 import com.sky.mapper.SetmealDishMapper;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
@@ -25,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,7 +34,7 @@ public class DishServiceImpl implements DishService {
     private DishMapper dishMapper;
 
     @Autowired
-    private FlavorMapper flavorMapper;
+    private DishFlavorMapper dishFlavorMapper;
 
     @Autowired
     private SetmealDishMapper setmealDishMapper;
@@ -57,7 +55,7 @@ public class DishServiceImpl implements DishService {
                 dishFlavor.setDishId(id);
             });
         }
-        flavorMapper.insertBatch(flavors);
+        dishFlavorMapper.insertBatch(flavors);
 
     }
     public PageResult pageQuery(DishPageQueryDTO dishPageQueryDTO) {
@@ -83,7 +81,7 @@ public class DishServiceImpl implements DishService {
         //删除菜品
         for (Long id : ids) {
             dishMapper.deleteById(id);
-            flavorMapper.deleteByDishId(id);
+            dishFlavorMapper.deleteByDishId(id);
         }
     }
 
@@ -93,7 +91,7 @@ public class DishServiceImpl implements DishService {
 
         //获取口味
 
-        List<DishFlavor> flavors = flavorMapper.getByDishId(id);
+        List<DishFlavor> flavors = dishFlavorMapper.getByDishId(id);
 
         //构建VO
         DishVO dishVO = new DishVO();
@@ -110,23 +108,49 @@ public class DishServiceImpl implements DishService {
         dishMapper.update(dish);
 
         //先删除后插入
-        flavorMapper.deleteByDishId(dishDTO.getId());
+        dishFlavorMapper.deleteByDishId(dishDTO.getId());
 
-        List<DishFlavor> flavors = flavorMapper.getByDishId(dishDTO.getId());
+        List<DishFlavor> flavors = dishFlavorMapper.getByDishId(dishDTO.getId());
 
         flavors.forEach(dishFlavor -> {
             dishFlavor.setDishId(dishDTO.getId());
         });
 
-        flavorMapper.insertBatch(flavors);
+        dishFlavorMapper.insertBatch(flavors);
 
     }
 
 
-    public List<Dish> list(String categoryId) {
-        List<Dish> dishes = dishMapper.list(categoryId);
-        return dishes;
+    public List<Dish> list(Long categoryId) {
+        Dish dish = Dish.builder()
+                .categoryId(categoryId)
+                .status(StatusConstant.ENABLE)
+                .build();
+        return dishMapper.list(dish);
     }
 
+    /**
+     * 条件查询菜品和口味
+     * @param dish
+     * @return
+     */
+    public List<DishVO> listWithFlavor(Dish dish) {
+        List<Dish> dishList = dishMapper.list(dish);
+
+        List<DishVO> dishVOList = new ArrayList<>();
+
+        for (Dish d : dishList) {
+            DishVO dishVO = new DishVO();
+            BeanUtils.copyProperties(d,dishVO);
+
+            //根据菜品id查询对应的口味
+            List<DishFlavor> flavors = dishFlavorMapper.getByDishId(d.getId());
+
+            dishVO.setFlavors(flavors);
+            dishVOList.add(dishVO);
+        }
+
+        return dishVOList;
+    }
 
 }

@@ -29,7 +29,7 @@ public class UserServiceImpl implements UserService {
     UserMapper userMapper;
 
 
-    public static final String WX_LOGIN = "https://api.weixin.com/sns/jscode2session";
+    public static final String WX_LOGIN = "https://api.weixin.qq.com/sns/jscode2session";
 
     public User wxLogin(UserLoginDTO userLoginDTO) {
         Map<String,String> map = new HashMap<>();
