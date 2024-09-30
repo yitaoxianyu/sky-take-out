@@ -2,6 +2,7 @@ package com.sky.controller.admin;
 
 
 import com.github.pagehelper.Page;
+import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
@@ -14,6 +15,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.jaxb.SpringDataJaxb;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +28,7 @@ import java.util.List;
 public class DishController {
     @Autowired
     private DishService dishService;
+
 
     @PostMapping
     @ApiOperation("保存")
@@ -77,15 +81,5 @@ public class DishController {
 
         return Result.success();
     }
-
-    @GetMapping("/list")
-    @ApiOperation("查询多个菜品对象")
-    public Result<List<Dish>> list(@RequestParam Long categoryId){
-        List<Dish> list = dishService.list(categoryId);
-
-
-        return Result.success(list);
-    }
-
 
 }
