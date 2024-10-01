@@ -45,8 +45,8 @@ public class SetmealServiceImpl implements SetmealService {
         //接口实现类
         List<SetmealDish> setmealDishes = new ArrayList<>();
         setmealDishes = setmealDTO.getSetmealDishes();
-        //同时要回显一个id，设置到basecontext
 
+        //需要对应套餐的id
         setmealDishes.forEach(setmealDish -> {
             setmealDish.setSetmealId(setmeal.getId());
         });
