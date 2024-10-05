@@ -92,6 +92,6 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                 shoppingCart.setNumber(shoppingCart.getNumber() - 1);
                 shoppingCartMapper.updateNumberById(shoppingCart);
             }
-
+        }
     }
 }
