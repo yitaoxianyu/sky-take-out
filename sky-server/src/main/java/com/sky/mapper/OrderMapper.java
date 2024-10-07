@@ -22,4 +22,6 @@ public interface OrderMapper {
 
     @Delete("delete from orders where id = #{id}")
     void deleteById(Long id);
+
+    void update(Orders orders);
 }
