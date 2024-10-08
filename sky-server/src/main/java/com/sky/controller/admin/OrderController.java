@@ -2,9 +2,12 @@ package com.sky.controller.admin;
 
 
 import com.sky.dto.OrdersCancelDTO;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersRejectionDTO;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.OrderService;
+import com.sky.vo.OrderStatisticsVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,23 @@ public class OrderController {
         return Result.success();
     }
 
+    @PutMapping("/complete/{id}")
+    @ApiOperation(value = "完成订单")
+    public Result complete(@PathVariable Long id){
+
+        orderService.complete(id);
+        return Result.success();
+    }
+
+    @GetMapping("/conditionSearch")
+    @ApiOperation(value = "订单搜索")
+    public Result<PageResult> conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO){
+
+        PageResult pageResult = orderService.conditionSearch(ordersPageQueryDTO);
+        return Result.success(pageResult);
+    }
+
+
     @PutMapping("/delivery/{id}")
     @ApiOperation(value = "派送订单")
     public Result delivery(@PathVariable Long id){
@@ -44,12 +64,12 @@ public class OrderController {
         return Result.success();
     }
 
-    @PutMapping("/complete/{id}")
-    @ApiOperation(value = "完成订单")
-    public Result complete(@PathVariable Long id){
+    @GetMapping("/statistics")
+    @ApiOperation(value = "各个状态订单的数量")
+    public Result<OrderStatisticsVO> statistics(){
 
-        orderService.complete(id);
-        return Result.success();
+        OrderStatisticsVO orderStatisticsVO = orderService.statistics();
+        return Result.success(orderStatisticsVO);
     }
 
 }

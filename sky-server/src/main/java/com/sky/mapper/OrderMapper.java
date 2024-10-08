@@ -24,4 +24,6 @@ public interface OrderMapper {
     void deleteById(Long id);
 
     void update(Orders orders);
+
+    Integer countStatus(Integer status);
 }
