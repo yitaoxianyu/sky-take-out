@@ -8,6 +8,7 @@ import com.sky.vo.OrderVO;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.springframework.core.annotation.Order;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Mapper
 public interface OrderMapper {
+
     void insert(Orders order);
 
     Page<Orders> pageQuery(OrdersPageQueryDTO pageQueryDTO);
@@ -31,4 +33,7 @@ public interface OrderMapper {
 
     @Select("select * from orders where status = #{status} and order_time < #{time}")
     List<Orders> getByStatusAndTimeTL(Integer status, LocalDateTime time);
+
+    @Update("update orders set pay_status = 1 where number = #{orderNumber}")
+    void paySuccess(String orderNumber);
 }

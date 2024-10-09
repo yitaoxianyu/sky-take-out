@@ -4,6 +4,7 @@ package com.sky.controller.user;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.OrdersPageQueryDTO;
+import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.AddressBook;
 import com.sky.entity.Orders;
@@ -18,10 +19,7 @@ import com.sky.result.Result;
 import com.sky.service.AddressBookService;
 import com.sky.service.OrderService;
 import com.sky.service.ShoppingCartService;
-import com.sky.vo.OrderOverViewVO;
-import com.sky.vo.OrderStatisticsVO;
-import com.sky.vo.OrderSubmitVO;
-import com.sky.vo.OrderVO;
+import com.sky.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +47,15 @@ public class OrderController {
 
 
         return Result.success(orderSubmitVO);
+    }
+
+    @PutMapping("/payment")
+    @ApiOperation(value = "订单支付")
+    public Result<OrderPaymentVO> payment(@RequestBody OrdersPaymentDTO ordersPaymentDTO){
+
+        OrderPaymentVO payment = orderService.payment(ordersPaymentDTO);
+        orderService.paySuccess(ordersPaymentDTO.getOrderNumber());
+        return Result.success(payment);
     }
 
     @GetMapping("/historyOrders")

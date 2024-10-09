@@ -8,25 +8,17 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersCancelDTO;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersRejectionDTO;
-import com.sky.dto.OrdersSubmitDTO;
-import com.sky.entity.AddressBook;
-import com.sky.entity.OrderDetail;
-import com.sky.entity.Orders;
-import com.sky.entity.ShoppingCart;
+import com.sky.dto.*;
+import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
-import com.sky.mapper.AddressBookMapper;
-import com.sky.mapper.OrderDetailMapper;
-import com.sky.mapper.OrderMapper;
-import com.sky.mapper.ShoppingCartMapper;
+import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.HttpClientUtil;
 import com.sky.utils.WeChatPayUtil;
+import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
@@ -60,8 +52,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderDetailMapper orderDetailMapper;
+
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Value("${sky.shop.address}")
     private String shopAddress;
@@ -85,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
         //转换成对象
         JSONObject jsonObject = JSON.parseObject(shopCoordinate);
 
-        if (jsonObject.getString("status").equals("0")) {
+        if (!jsonObject.getString("status").equals("0")) {
             throw new OrderBusinessException("商家地址解析失败！");
         }
 
@@ -101,7 +97,7 @@ public class OrderServiceImpl implements OrderService {
         map.put("address",address);
         String userCoordinate = HttpClientUtil.doGet(coordinateUrl, map);
         jsonObject = JSON.parseObject(userCoordinate);
-        if (jsonObject.getString("status").equals("0")) {
+        if (!jsonObject.getString("status").equals("0")) {
             throw new OrderBusinessException("收货地址解析失败！");
         }
 
@@ -118,12 +114,14 @@ public class OrderServiceImpl implements OrderService {
         String s = HttpClientUtil.doGet("https://api.map.baidu.com/directionlite/v1/driving", map);
         jsonObject = JSON.parseObject(s);
 
-        if (jsonObject.getString("status").equals("0")) {
+        if (!jsonObject.getString("status").equals("0")) {
             throw new OrderBusinessException("路径解析失败！");
         }
         JSONObject result = jsonObject.getJSONObject("result");
         JSONArray jsonArray = (JSONArray)result.get("routes");
         Integer distance = (Integer) ((JSONObject) jsonArray.get(0)).get("distance");
+
+
 
         if(distance > 5000) throw new OrderBusinessException("超出配送范围");
 
@@ -361,10 +359,28 @@ public class OrderServiceImpl implements OrderService {
         Integer toBeConfirmed = orderMapper.countStatus(Orders.TO_BE_CONFIRMED);
         Integer deliveryInProgress = orderMapper.countStatus(Orders.DELIVERY_IN_PROGRESS);
 
-
         return null;
     }
 
+    public OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) {
+        Long userId = BaseContext.getCurrentId();
+        User user = userMapper.getById(userId);
+
+        JSONObject jsonObject = new JSONObject();
+        if(jsonObject.getString("code") != null && jsonObject.getString("code").equals("ORDERPAID")){
+            throw new OrderBusinessException("订单已支付");
+        }
+
+        OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
+        vo.setPackageStr(jsonObject.getString("package"));
+
+        return vo;
+    }
+
+    public void paySuccess(String orderNumber) {
+        orderMapper.paySuccess(orderNumber); //直接修改订单状态
+        return ;
+    }
 
 
 }
