@@ -20,3 +20,8 @@ sky:
   wechat:
     appid: wx08407ff2f1baa7db
     secret: 562f2c9164a62b1dcb8dfe5c51f17cc3
+  shop:
+    address : 北京市朝阳区新街大道一号楼8层
+  baidu:
+    ak : rMr9Qp5qFdEB5cQiA1X98PbJC4ekOOW6
+    coordinate : https://api.map.baidu.com/geocoding/v3

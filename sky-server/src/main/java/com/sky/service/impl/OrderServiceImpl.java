@@ -1,5 +1,9 @@
 package com.sky.service.impl;
 
+import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
@@ -21,6 +25,7 @@ import com.sky.mapper.OrderMapper;
 import com.sky.mapper.ShoppingCartMapper;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
+import com.sky.utils.HttpClientUtil;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
@@ -28,12 +33,15 @@ import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -55,10 +63,80 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private WeChatPayUtil weChatPayUtil;
 
+    @Value("${sky.shop.address}")
+    private String shopAddress;
+
+    @Value("${sky.baidu.ak}")
+    private String ak;
+
+    @Value("${sky.baidu.coordinate}")
+    private String coordinateUrl;
+
+    private void checkOutOfRange(String address){
+        Map<String,String> map = new HashMap<>();
+        map.put("address",shopAddress);
+        map.put("output","json");
+        map.put("ak",ak);
+
+        //调用这个api会将对应的地址转换成经纬度
+        //自动将json数据处理成对应字符串。
+        String shopCoordinate = HttpClientUtil.doGet(coordinateUrl, map);
+
+        //转换成对象
+        JSONObject jsonObject = JSON.parseObject(shopCoordinate);
+
+        if (jsonObject.getString("status").equals("0")) {
+            throw new OrderBusinessException("商家地址解析失败！");
+        }
+
+        //获取经纬度
+        JSONObject location = jsonObject.getJSONObject("result").getJSONObject("location");
+
+        String lat = location.getString("lat");
+        String lng = location.getString("lng");
+        //根据经纬度计算出距离
+
+        String shopLngLat = lat + "," + lng;
+
+        map.put("address",address);
+        String userCoordinate = HttpClientUtil.doGet(coordinateUrl, map);
+        jsonObject = JSON.parseObject(userCoordinate);
+        if (jsonObject.getString("status").equals("0")) {
+            throw new OrderBusinessException("收货地址解析失败！");
+        }
+
+        JSONObject userLocation = jsonObject.getJSONObject("result").getJSONObject("location");
+        String userLng = userLocation.getString("lng");
+        String userLat = userLocation.getString("lat");
+
+        String userLngLat = userLat + "," + userLng;
+
+        map.put("origin",shopLngLat);
+        map.put("destination",userLngLat);
+        map.put("steps_info","0");
+
+        String s = HttpClientUtil.doGet("https://api.map.baidu.com/directionlite/v1/driving", map);
+        jsonObject = JSON.parseObject(s);
+
+        if (jsonObject.getString("status").equals("0")) {
+            throw new OrderBusinessException("路径解析失败！");
+        }
+        JSONObject result = jsonObject.getJSONObject("result");
+        JSONArray jsonArray = (JSONArray)result.get("routes");
+        Integer distance = (Integer) ((JSONObject) jsonArray.get(0)).get("distance");
+
+        if(distance > 5000) throw new OrderBusinessException("超出配送范围");
+
+    }
+
+
 
     public OrderSubmitVO orderSubmit(OrdersSubmitDTO ordersSubmitDTO) {
+
         AddressBook addressBook = addressBookMapper.getById(ordersSubmitDTO.getAddressBookId());
         if(addressBook == null) throw new AddressBookBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
+
+        checkOutOfRange(addressBook.getCityName() + addressBook.getDistrictName() + addressBook.getDetail());
 
         Long userId = BaseContext.getCurrentId();
         ShoppingCart shoppingCart = ShoppingCart.builder().userId(userId).build();
@@ -286,4 +364,7 @@ public class OrderServiceImpl implements OrderService {
 
         return null;
     }
+
+
+
 }
