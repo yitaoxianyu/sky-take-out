@@ -22,6 +22,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     @Value("${sky.shop.address}")
     private String shopAddress;
@@ -123,7 +127,7 @@ public class OrderServiceImpl implements OrderService {
 
 
 
-        if(distance > 5000) throw new OrderBusinessException("超出配送范围");
+        if(distance < 5000) throw new OrderBusinessException("超出配送范围");
 
     }
 
@@ -238,13 +242,9 @@ public class OrderServiceImpl implements OrderService {
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
         if(ordersDB.getStatus().equals(Orders.TO_BE_CONFIRMED)){
-            weChatPayUtil.refund(
-                    orders.getNumber(),
-                    orders.getNumber(),
-                    new BigDecimal(0.01),
-                    new BigDecimal(0.01));
+            orders.setPayStatus(Orders.REFUND);
         }
-        orders.setPayStatus(Orders.REFUND);
+
 
         orders.setStatus(Orders.CANCELLED);
         orders.setCancelReason("用户取消");
@@ -278,18 +278,13 @@ public class OrderServiceImpl implements OrderService {
         Integer payStatus = ordersDB.getPayStatus();
         if(payStatus == Orders.PAID){
             //进行退款
-            String refund = weChatPayUtil.refund(
-                    ordersDB.getNumber(),
-                    ordersDB.getNumber(),
-                    new BigDecimal(0.01),
-                    new BigDecimal(0.01)
-            );
-            log.info("用户退款:{}",refund);
+
+            log.info("用户退款:{}",ordersDB.getNumber());
         }
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
 
-        orders.setStatus(ordersDB.getStatus());
+        orders.setStatus(Orders.CANCELLED);
         orders.setCancelTime(LocalDateTime.now());
         orders.setCancelReason(ordersRejectionDTO.getRejectionReason());
 
@@ -378,7 +373,45 @@ public class OrderServiceImpl implements OrderService {
     }
 
     public void paySuccess(String orderNumber) {
-        orderMapper.paySuccess(orderNumber); //直接修改订单状态
+         //直接修改订单状态
+        Long userId = BaseContext.getCurrentId();
+        Orders ordersDB = orderMapper.getByNumberAndUserId(orderNumber, userId);
+
+        Orders newOrders = Orders.builder().id(ordersDB.getId())
+        //在企业开发中，这里设置订单状态应该为待接单，但是为了体现Apache Echarts
+                .status(Orders.COMPLETED)
+                .payStatus(Orders.PAID)
+                .checkoutTime(LocalDateTime.now())
+                .build();
+        orderMapper.update(newOrders);
+
+        Map map = new HashMap<>();
+        map.put("type",1);//1表示来单提醒2表示催单
+        map.put("orderId",ordersDB.getId());
+        map.put("content","订单号" + orderNumber);
+
+        String s = JSONObject.toJSONString(map);
+        webSocketServer.sendToAllClient(s);
+
+        return ;
+    }
+
+    public void reminder(Long id) {
+
+        Orders ordersDB = orderMapper.getById(id);
+
+        if(ordersDB == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Map map = new HashMap<>();
+        map.put("type",2);  //2表示催单
+        map.put("orderId",ordersDB.getId());
+        map.put("content","订单号" + ordersDB.getNumber());
+
+        //JSON方法通使用场景更加广泛，而JSONObject的该方法更多在对象示例中调用。
+        String s = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(s);
         return ;
     }
 

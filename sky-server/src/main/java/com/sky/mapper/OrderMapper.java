@@ -13,6 +13,7 @@ import org.springframework.core.annotation.Order;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper {
@@ -34,6 +35,8 @@ public interface OrderMapper {
     @Select("select * from orders where status = #{status} and order_time < #{time}")
     List<Orders> getByStatusAndTimeTL(Integer status, LocalDateTime time);
 
-    @Update("update orders set pay_status = 1 where number = #{orderNumber}")
-    void paySuccess(String orderNumber);
+    @Select("select * from orders where number = #{orderNumber} and user_id = #{userId}")
+    Orders getByNumberAndUserId(String orderNumber,Long userId);
+
+    Double sumByMap(Map map);
 }

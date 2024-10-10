@@ -20,6 +20,7 @@ import com.sky.service.AddressBookService;
 import com.sky.service.OrderService;
 import com.sky.service.ShoppingCartService;
 import com.sky.vo.*;
+import com.sky.websocket.WebSocketServer;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -79,10 +80,19 @@ public class OrderController {
     @PutMapping("/cancel/{id}")
     @ApiOperation(value = "取消订单")
     public Result cancel(@PathVariable Long id) throws Exception {
-        orderService.userCancelById(id);
 
+        orderService.userCancelById(id);
         return Result.success();
     }
+
+    @GetMapping("/reminder/{id}")
+    @ApiOperation(value = "用户催单")
+    public Result reminder(@PathVariable Long id){
+
+        orderService.reminder(id);
+        return Result.success();
+    }
+
 
     @PostMapping("/repetition/{id}")
     @ApiOperation(value = "再来一单")
