@@ -328,7 +328,7 @@ public class OrderServiceImpl implements OrderService {
 
     public void complete(Long id) {
         Orders ordersDB = orderMapper.getById(id);
-        if(ordersDB == null || ordersDB.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)){
+        if(ordersDB == null || !ordersDB.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)){
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
@@ -413,6 +413,20 @@ public class OrderServiceImpl implements OrderService {
         String s = JSON.toJSONString(map);
         webSocketServer.sendToAllClient(s);
         return ;
+    }
+
+    public void confirm(Long id) {
+        Orders ordersDB = orderMapper.getById(id);
+
+        if(ordersDB == null || !ordersDB.getStatus().equals(Orders.TO_BE_CONFIRMED)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders orders = new Orders();
+        orders.setId(ordersDB.getId());
+        orders.setStatus(Orders.CONFIRMED);
+
+        orderMapper.update(orders);
     }
 
 
