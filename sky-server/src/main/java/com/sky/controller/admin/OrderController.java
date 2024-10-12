@@ -8,12 +8,15 @@ import com.sky.dto.OrdersRejectionDTO;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.OrderService;
+import com.sky.service.ReportService;
 import com.sky.vo.OrderStatisticsVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
 
 @RestController("adminOrderController")
 @Slf4j
@@ -81,5 +84,11 @@ public class OrderController {
         OrderStatisticsVO orderStatisticsVO = orderService.statistics();
         return Result.success(orderStatisticsVO);
     }
+
+    /**
+     * 导出运营数据报表
+     * @param response
+     */
+
 
 }
